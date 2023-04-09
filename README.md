@@ -21,7 +21,7 @@ This is a simple Employee Management System API built with Node.js, Express.js, 
 
 1. Clone the repository
 
-`https://github.com/TariqTawalbeh/employees-board-nodejs.git`
+`git clone https://github.com/TariqTawalbeh/employees-board-nodejs.git`
 
 
 2. Install dependencies
