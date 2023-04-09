@@ -12,7 +12,7 @@ testConnection();
 app.use(express.json());
 
 // Routes
-app.use('/user', userRoutes);
+app.use('/users', userRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
