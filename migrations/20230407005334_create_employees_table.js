@@ -10,6 +10,7 @@ exports.up = function(knex) {
     table.boolean('is_active').defaultTo(true);
     table.timestamp('createdAt').defaultTo(knex.fn.now());
     table.timestamp('updatedAt').defaultTo(knex.fn.now());
+    table.timestamp('deletedAt').defaultTo(knex.fn.now());
   });
 };
 

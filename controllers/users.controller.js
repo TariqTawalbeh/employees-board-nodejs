@@ -4,12 +4,21 @@ const config = require('../config/config');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
 const { body, validationResult } = require('express-validator');
+const {Op} = require("sequelize");
 
 class UserController {
     static async getAllUsers(req, res) {
         try {
-            const users = await User.findAll();
-            res.status(200).json(users);
+            const users = await User.findAll({
+                where: {
+                    deletedAt: null,
+                    role_id: {
+                        [Op.ne]: 1
+                    }
+                },
+                attributes: ['id', 'name', 'email', 'role_id']
+            });
+            res.status(200).json({ users });
         } catch (err) {
             console.error(err);
             res.status(500).json({ message: 'Internal server error' });
@@ -18,9 +27,17 @@ class UserController {
 
     static async getUserById(req, res) {
         try {
-            const user = await User.findByPk(req.params.id);
+            const user = await User.findOne({
+                where: {
+                    id: req.params.id,
+                    deletedAt: null,
+                    role_id: {
+                        [Op.ne]: 1
+                    }
+                }
+            });
             if (!user) {
-                return res.status(404).json({ message: 'User not found' });
+                return res.status(404).json({ message: 'User not found or You are not Authorized to access it' });
             }
             res.status(200).json(user);
         } catch (err) {
@@ -41,8 +58,13 @@ class UserController {
             if (!errors.isEmpty()) {
                 return res.status(400).json({ errors: errors.array() });
             }
+            req.body.password = await bcrypt.hash(req.body.password, 10);
 
-            const user = await User.create(req.body);
+            const user = await User.create({
+                ...req.body,
+                is_active: 1
+            });
+
             res.status(201).json(user);
         } catch (err) {
             console.error(err);
@@ -71,7 +93,7 @@ class UserController {
         try {
             const [updatedRowsCount] = await User.update(
                 updates,
-                { where: { id: req.params.id } }
+                { where: { id: req.params.id , role_id: 1 , deletedAt: null} }
             );
             if (updatedRowsCount > 0) {
                 const updatedUser = await User.findOne({ where: { id: req.params.id } });
@@ -94,18 +116,27 @@ class UserController {
         }
 
         try {
-            const deletedRowsCount = await User.destroy({
-                where: { id }
+            const user = await User.findOne({
+                where: {
+                    id,
+                    role_id: 2,
+                    deletedAt: null
+                }
             });
-            if (!deletedRowsCount) {
+
+            if (!user) {
                 return res.status(404).json({ message: 'User not found' });
             }
+
+            await user.update({ deletedAt: new Date() });
+
             res.status(200).json({ message: 'User deleted successfully' });
         } catch (err) {
             console.error(err);
             res.status(500).json({ message: 'Internal server error' });
         }
     }
+
     static generateToken(user) {
         return jwt.sign({ id: user.id }, config.jwtSecret, { expiresIn: '1d' });
     }

@@ -27,6 +27,11 @@ User.init({
         type: DataTypes.BOOLEAN,
         allowNull: false
     },
+    deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null
+    }
 }, {
     sequelize,
     modelName: 'User',
